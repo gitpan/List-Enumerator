@@ -5,14 +5,14 @@ use Sub::Exporter -setup => { exports => [ "E" ] };
 use List::Enumerator::Array;
 use List::Enumerator::Sub;
 
-our $VERSION = "0.02";
+our $VERSION = "0.03";
 
 sub E {
 	my (@args) = @_;
-	if (ref($args[0]) eq "HASH") {
-		List::Enumerator::Sub->new($args[0]);
-	} elsif (ref($args[0]) eq "ARRAY") {
+	if (ref($args[0]) eq "ARRAY") {
 		List::Enumerator::Array->new(array => $args[0]);
+	} elsif (ref($args[0]) eq "HASH") {
+		List::Enumerator::Sub->new($args[0]);
 	} elsif (ref($args[0]) =~ /^List::Enumerator/) {
 		$args[0];
 	} else {

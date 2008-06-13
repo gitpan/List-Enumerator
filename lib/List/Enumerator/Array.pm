@@ -128,6 +128,35 @@ sub delete_at {
 	$ret;
 }
 
+# for performance
+sub each {
+	my ($self, $block) = @_;
+	$self->rewind;
+
+	if ($block) {
+		eval {
+			for (@{ $self->array }) {
+				$block->(local $_ = $_);
+			}
+		}; if (Exception::Class->caught("StopIteration") ) { } else {
+			my $e = Exception::Class->caught();
+			ref $e ? $e->rethrow : die $e if $e;
+		}
+	}
+
+	$self;
+}
+
+sub map {
+	my ($self, $block) = @_;
+	$self->rewind;
+	my @ret;
+
+	@ret = CORE::map({ $block->(local $_ = $_) } @{ $self->array });
+
+	wantarray? @ret : List::Enumerator::Array->new(array => \@ret);
+}
+
 __PACKAGE__->meta->make_immutable;
 
 1;

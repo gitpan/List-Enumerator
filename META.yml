@@ -16,4 +16,4 @@ requires:
   List::MoreUtils: 0
   List::Util: 0
   Moose: 0
-version: 0.02
+version: 0.03
