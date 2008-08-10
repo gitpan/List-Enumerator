@@ -15,5 +15,5 @@ requires:
   Exception::Class: 0
   List::MoreUtils: 0
   List::Util: 0
-  Moose: 0
-version: 0.03
+  Sub::Exporter: 0
+version: 0.04
