@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use base qw/Test::Class/;
 use Test::More;
+use Test::Exception;
 
 use lib "lib";
 use List::Enumerator qw/E/;
@@ -492,6 +493,22 @@ sub test_sort : Test {
 	is_deeply E(5, 2, 1, 3, 4)->sort->to_a, [1, 2, 3, 4, 5];
 }
 
+sub test_sort_by : Test {
+	is_deeply E([
+		{ key => 1 },
+		{ key => 4 },
+		{ key => 5 },
+		{ key => 3 },
+		{ key => 2 },
+	])->sort_by(sub { $_->{key} })->to_a, [
+		{ key => 1 },
+		{ key => 2 },
+		{ key => 3 },
+		{ key => 4 },
+		{ key => 5 },
+	];
+}
+
 sub test_compact : Test {
 	is_deeply E(undef, 1, undef, 2, 3)->compact->to_a, [1, 2, 3];
 }
@@ -511,6 +528,48 @@ sub test_flatten : Test(3) {
 
 sub test_reverse : Test(1) {
 	is_deeply E(5, 2, 1, 3, 4)->reverse->to_a, [4, 3, 1, 2, 5];
+}
+
+sub test_choice : Test(6) {
+	my $r = [];
+
+	is E(1)->choice, 1;
+	is E(1)->sample, 1;
+
+	push @$r, E(1, 2)->choice for 0..10;
+	ok grep { $_ == 1 } @$r;
+	ok grep { $_ == 2 } @$r;
+	ok !@{[ grep { $_ != 1 and $_ != 2 } @$r ]};
+
+	push @$r, E(1..10)->choice for 0..100;
+	ok !@{[ grep { !(1 <= $_ and $_ <= 10) } @$r ]};
+}
+
+sub test_shuffle : Test(2) {
+	my $r;
+
+	$r = [ E(1, 2, 3)->shuffle ];
+	is scalar(@$r), 3;
+
+	$r = E(1, 2, 3)->shuffle->to_a;
+	is scalar(@$r), 3;
+}
+
+sub test_transpose : Test(3) {
+	is_deeply [ E([])->transpose ], [];
+
+	is_deeply [ E([
+		[1, 2],
+		[3, 4],
+		[5, 6],
+	])->transpose ], [
+		[1, 3, 5],
+		[2, 4, 6],
+	];
+
+	throws_ok {
+		E([1, 2])->transpose;
+	} qr/not a matrix/;
 }
 
 __PACKAGE__->runtests;

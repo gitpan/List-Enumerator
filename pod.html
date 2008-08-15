@@ -72,7 +72,7 @@
 <p>Returns List::Enumerator::Array.</p>
 </dd>
 </li>
-<dt><strong><code>E({ next =</code> sub {}, rewind =&gt; sub {} })&gt;</strong>
+<dt><strong><code>E({ next =&gt; sub {}, rewind =&gt; sub {} })</code></strong>
 
 <dd>
 <p>Returns List::Enumerator::Sub. ex:</p>
@@ -107,18 +107,16 @@
 <dt><strong><a name="item_next"><code>next</code></a></strong>
 
 <dd>
-<p>Returns next element of receiver. The modules which use List::Enumerator::Role must define this method.</p>
+<p>Returns next element of receiver.</p>
 </dd>
 </li>
 <dt><strong><a name="item_rewind"><code>rewind</code></a></strong>
 
 <dd>
-<p>Rewinds receiver. The modules which use List::Enumerator::Role must define this method.</p>
+<p>Rewinds receiver.</p>
 </dd>
 </li>
-<dt><strong><a name="item_select"><code>select(sub {})</code></a></strong>
-
-<dt><strong><a name="item_find_all"><code>find_all(sub {})</code></a></strong>
+<dt><strong><a name="item_select"><code>select(sub {})</code>, <code>find_all(sub {})</code></a></strong>
 
 <dd>
 <p>Selects all elements which is evaluated true with block. find_all is just alias to select.</p>
@@ -428,9 +426,9 @@ If $lim is not supplied, this returns infinite list.</p>
 <dt><strong><a name="item_include"><code>include($target)</code>, <code>is_include($target)</code></a></strong>
 
 <dd>
-<pre>
-  If receiver include $target this return true.</pre>
+<p>If receiver include $target this return true.</p>
 </dd>
+</li>
 <dt><strong><a name="item_map"><code>map(sub {})</code>, <code>collect(sub {})</code></a></strong>
 
 <dd>

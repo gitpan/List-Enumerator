@@ -2,6 +2,7 @@ abstract: list construct library
 author: cho45 <cho45@lowreal.net>
 build_requires: 
   Test::Class: 0
+  Test::Exception: 0
   Test::More: 0
 distribution_type: module
 generated_by: Module::Install version 0.640
@@ -16,4 +17,4 @@ requires:
   List::MoreUtils: 0
   List::Util: 0
   Sub::Exporter: 0
-version: 0.04
+version: 0.05

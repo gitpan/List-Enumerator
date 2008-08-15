@@ -3,6 +3,7 @@ use Exception::Class ( "StopIteration" );
 
 use List::Util;
 use List::MoreUtils;
+
 use base qw/Class::Accessor::Fast/;
 no warnings 'once';
 
@@ -166,7 +167,7 @@ sub minmax_by {
 
 sub sort_by {
 	my ($self, $block) = @_;
-	List::Enumerator::E([
+	List::Enumerator::Array->new(array => [
 		map {
 			$_->[0];
 		}
@@ -682,6 +683,30 @@ sub each_cons {
 		$ret->each($block);
 	}
 	wantarray? $ret->to_list : $ret;
+}
+
+sub choice {
+	my ($self) = @_;
+	$self->[int(rand($self->length))];
+}
+*sample = \&choice;
+
+sub shuffle {
+	my ($self) = @_;
+	my @shuffled = List::Util::shuffle($self->to_list);
+	wantarray? @shuffled : List::Enumerator::Array->new(array => \@shuffled);
+}
+
+sub transpose {
+	my ($self) = @_;
+	my ($first, @rest) = $self->to_list;
+
+	if (defined $first) {
+		die "not a matrix" unless ref($first) eq "ARRAY";
+		List::Enumerator::Array->new(array => $first)->zip(@rest);
+	} else {
+		List::Enumerator::Array->new(array => [])->to_list;
+	}
 }
 
 sub to_a {

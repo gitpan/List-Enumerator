@@ -9,7 +9,7 @@ use Sub::Exporter -setup => {
 use List::Enumerator::Array;
 use List::Enumerator::Sub;
 
-our $VERSION = "0.04";
+our $VERSION = "0.05";
 
 sub E {
 	my (@args) = @_;
@@ -37,13 +37,15 @@ List::Enumerator - list construct library
   use List::Enumerator qw/E/;
 
   my $fizzbuzz =
-      E(1)->countup->zip(
-          E("", "", "Fizz")->cycle,
-          E("", "", "", "", "Buzz")->cycle
-      )->map(sub {
-          my ($n, $fizz, $buzz) = @$_;
-          $fizz . $buzz || $n;
-      });
+      E(1)->countup
+          ->zip(
+              E("", "", "Fizz")->cycle,
+              E("", "", "", "", "Buzz")->cycle
+          )
+          ->map(sub {
+              my ($n, $fizz, $buzz) = @$_;
+              $fizz . $buzz || $n;
+          });
   
   $fizzbuzz->take(20)->each(sub {
       print $_, "\n";
@@ -69,7 +71,7 @@ Most methods (except what returns always infinite list) consider caller context.
 
 Returns List::Enumerator::Array.
 
-=item C<E({ next => sub {}, rewind => sub {} })>
+=item C<E({ next =E<gt> sub {}, rewind =E<gt> sub {} })>
 
 Returns List::Enumerator::Sub. ex:
 
@@ -316,7 +318,7 @@ Returns a hash reference group by the block.
 
 =item C<include($target)>, C<is_include($target)>
 
-  If receiver include $target this return true.
+If receiver include $target this return true.
 
 =item C<map(sub {})>, C<collect(sub {})>
 
@@ -348,6 +350,29 @@ Iterate indexes with block.
   	[1, 2, 3],
   	[2, 3, 4],
   	[3, 4, 5]
+  ];
+
+=item C<choice>, C<sample>
+
+Returns one item in receiver randomly.
+
+=item C<shuffle>
+
+Returns randomized array of receiver.
+
+=item C<transpose>
+
+Returns transposed array of receiver.
+
+  [ E([
+  	[1, 2],
+  	[3, 4],
+  	[5, 6],
+  ])->transpose ]
+  
+  [
+  	[1, 3, 5],
+  	[2, 4, 6],
   ];
 
 =item C<to_list>
