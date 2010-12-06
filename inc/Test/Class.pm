@@ -7,13 +7,12 @@ package Test::Class;
 
 use Attribute::Handlers;
 use Carp;
-use Class::ISA;
-use Devel::Symdump;
+use MRO::Compat;
 use Storable qw(dclone);
 use Test::Builder;
 use Test::Class::MethodInfo;
 
-our $VERSION = '0.31';
+our $VERSION = '0.36';
 
 my $Check_block_has_run;
 {
@@ -38,6 +37,7 @@ sub builder { $Builder };
 
 
 my $Tests = {};
+my @Filters = ();
 
 
 my %_Test;  # inside-out object field indexed on $self
@@ -84,7 +84,9 @@ sub _parse_attribute_args {
 
 sub _is_public_method {
     my ($class, $name) = @_;
-    foreach my $parent_class ( Class::ISA::super_path( $class ) ) {
+    my @parents = @{mro::get_linear_isa($class)};
+    shift @parents;
+    foreach my $parent_class ( @parents ) {
         return unless $parent_class->can( $name );
         return if _method_info( $class, $parent_class, $name );
     }
@@ -99,14 +101,8 @@ sub Test : ATTR(CODE,RAWDATA) {
         my $name = *{$symbol}{NAME};
         warn "overriding public method $name with a test method in $class\n"
                 if _is_public_method( $class, $name );
-        eval { 
-            my ($type, $num_tests) = _parse_attribute_args($args);        
-            $Tests->{$class}->{$name} = Test::Class::MethodInfo->new(
-                name => $name, 
-                num_tests => $num_tests,
-                type => $type,
-            );	
-        } || warn "bad test definition '$args' in $class->$name\n";	
+        eval { $class->add_testinfo($name, _parse_attribute_args($args)) } 
+            || warn "bad test definition '$args' in $class->$name\n";	
     };
 };
 
@@ -115,6 +111,15 @@ sub Tests : ATTR(CODE,RAWDATA) {
     $args ||= 'no_plan';
     Test( $class, $symbol, $code_ref, $attr, $args );
 };
+
+sub add_testinfo {
+    my($class, $name, $type, $num_tests) = @_;
+    $Tests->{$class}->{$name} = Test::Class::MethodInfo->new(
+        name => $name,
+        num_tests => $num_tests,
+        type => $type,
+    );
+}
 
 sub _class_of {
     my $self = shift;
@@ -139,9 +144,19 @@ sub _get_methods {
     die "TEST_METHOD ($test_method_regexp) is not a valid regexp: $@" if $@;
 	
 	my %methods = ();
-	foreach my $class ( Class::ISA::self_and_super_path( $test_class ) ) {
+	foreach my $class ( @{mro::get_linear_isa( $test_class )} ) {
+      FILTER:
 		foreach my $info ( _methods_of_class( $self, $class ) ) {
 		    my $name = $info->name;
+
+            if ( $info->type eq TEST ) {
+                # determine if method is filtered, true if *any* filter
+                # returns false.
+                foreach my $filter ( @Filters ) {
+                    next FILTER unless $filter->( $class, $name );
+                }
+            }
+
 			foreach my $type ( @types ) {
 			    if ( $info->is_type( $type ) ) {
     				$methods{ $name } = 1 
@@ -151,7 +166,8 @@ sub _get_methods {
 		};
 	};
 
-    return sort keys %methods;
+    my @methods = sort keys %methods;
+    return @methods;
 };
 
 sub _num_expected_tests {
@@ -195,7 +211,7 @@ sub _total_num_tests {
 	my $class = _class_of( $self );
 	my $total_num_tests = 0;
 	foreach my $method (@methods) {
-		foreach my $class (Class::ISA::self_and_super_path($class)) {
+		foreach my $class (@{mro::get_linear_isa($class)}) {
 			my $info = _method_info($self, $class, $method);
 			next unless $info;
 			my $num_tests = $info->num_tests;
@@ -262,7 +278,8 @@ sub _run_method {
 		_exception_failure($self, $method, $exception, $tests) 
 				unless $exception eq '';
 	} elsif ($num_done > $num_expected) {
-		$Builder->diag("expected $num_expected test(s) in $method, $num_done completed\n");
+        my $class = ref $self;
+		$Builder->diag("expected $num_expected test(s) in $class\::$method, $num_done completed\n");
 	} else {
 		until (($Builder->current_test - $num_start) >= $num_expected) {
 			if ($exception ne '') {
@@ -307,7 +324,7 @@ sub _isa_class {
 
 sub _test_classes {
 	my $class = shift;
-	return grep { _isa_class( $class, $_ ) } Devel::Symdump->rnew->packages;
+	return( @{mro::get_isarev($class)}, $class );
 };
 
 sub runtests {
@@ -406,6 +423,16 @@ sub SKIP_ALL {
 	$Builder->skip( $reason ) 
 	    until $Builder->current_test >= $last_test;
 	exit(0);
+}
+
+sub add_filter {
+    my ( $class, $cb ) = @_;
+
+    if ( not ref $cb eq 'CODE' ) {
+        croak "Filter isn't a code-ref"
+    }
+
+    push @Filters, $cb;
 }
 
 1;

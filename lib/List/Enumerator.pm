@@ -1,4 +1,7 @@
 package List::Enumerator;
+use strict;
+use warnings;
+
 use Sub::Exporter -setup => {
 	exports => [ "E" ],
 	groups  => {
@@ -9,7 +12,7 @@ use Sub::Exporter -setup => {
 use List::Enumerator::Array;
 use List::Enumerator::Sub;
 
-our $VERSION = "0.09";
+our $VERSION = "0.10";
 
 sub E {
 	my (@args) = @_;
